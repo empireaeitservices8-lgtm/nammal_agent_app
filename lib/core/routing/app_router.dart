@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/views/splash_screen.dart';
 import '../../features/auth/views/phone_login_screen.dart';
 import '../../features/auth/views/otp_verification_screen.dart';
+import '../../features/auth/views/agent_registration_screen.dart';
 import '../../features/auth/views/user_onboarding_screen.dart';
 import '../../features/home/views/home_screen.dart';
 import '../../features/wallet/views/wallet_screen.dart';
@@ -12,6 +13,7 @@ class AppRoutes {
   static const String login = '/login';
   static const String otp = '/otp';
   static const String onboarding = '/onboarding';
+  static const String registration = '/registration';
   static const String home = '/home';
   static const String wallet = '/wallet';
   static const String profile = '/profile';
@@ -41,7 +43,12 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.onboarding,
       name: 'onboarding',
-      builder: (context, state) => const UserOnboardingScreen(),
+      builder: (context, state) => const AgentRegistrationScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.registration,
+      name: 'registration',
+      builder: (context, state) => const AgentRegistrationScreen(),
     ),
     GoRoute(
       path: AppRoutes.home,

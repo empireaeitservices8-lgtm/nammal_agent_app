@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../core/config/app_colors.dart';
 import '../../../core/routing/app_router.dart';
 import '../models/auth_state.dart';
+import '../models/send_otp_response.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../widgets/nammal_logo.dart';
 
@@ -28,13 +30,29 @@ class _PhoneLoginScreenState extends ConsumerState<PhoneLoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final phone = _phoneController.text.trim();
-    final fullNumber = phone.startsWith('+') ? phone : '+91$phone';
 
-    final success = await ref
+    final response = await ref
         .read(authViewModelProvider.notifier)
-        .sendOtp(fullNumber);
+        .sendOtp(phone);
 
-    if (mounted && success) {
+    if (mounted && response != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            response.otp != null && response.otp!.isNotEmpty
+                ? '${response.message} (OTP: ${response.otp})'
+                : response.message,
+          ),
+          backgroundColor: AppColors.success,
+        ),
+      );
+
+      final fullNumber = response.phoneNumber.isNotEmpty
+          ? (response.phoneNumber.startsWith('+')
+                ? response.phoneNumber
+                : '+91 ${response.phoneNumber}')
+          : '+91 $phone';
+
       context.push(AppRoutes.otp, extra: fullNumber);
     } else if (mounted) {
       final error =

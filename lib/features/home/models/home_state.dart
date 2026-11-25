@@ -1,36 +1,49 @@
-import 'agent_model.dart';
+import '../../profile/models/profile_model.dart';
+import 'handled_call_model.dart';
 
 enum HomeStatus { initial, loading, loaded, error }
 
 class HomeState {
   final HomeStatus status;
-  final List<AgentModel> onlineAgents;
-  final List<AgentModel> allAgents;
+  final AgentDetailsModel? agentDetails;
+  final List<HandledCallModel> recentCalls;
   final String? errorMessage;
-  final int selectedCategoryIndex;
+  final String agentName;
+  final bool isOnline;
+  final bool isTogglingStatus;
+  final int unreadNotificationsCount;
 
   const HomeState({
     this.status = HomeStatus.initial,
-    this.onlineAgents = const [],
-    this.allAgents = const [],
+    this.agentDetails,
+    this.recentCalls = const [],
     this.errorMessage,
-    this.selectedCategoryIndex = 0,
+    this.agentName = 'Rahul Sharma',
+    this.isOnline = true,
+    this.isTogglingStatus = false,
+    this.unreadNotificationsCount = 3,
   });
 
   HomeState copyWith({
     HomeStatus? status,
-    List<AgentModel>? onlineAgents,
-    List<AgentModel>? allAgents,
+    AgentDetailsModel? agentDetails,
+    List<HandledCallModel>? recentCalls,
     String? errorMessage,
-    int? selectedCategoryIndex,
+    String? agentName,
+    bool? isOnline,
+    bool? isTogglingStatus,
+    int? unreadNotificationsCount,
   }) {
     return HomeState(
       status: status ?? this.status,
-      onlineAgents: onlineAgents ?? this.onlineAgents,
-      allAgents: allAgents ?? this.allAgents,
+      agentDetails: agentDetails ?? this.agentDetails,
+      recentCalls: recentCalls ?? this.recentCalls,
       errorMessage: errorMessage,
-      selectedCategoryIndex:
-          selectedCategoryIndex ?? this.selectedCategoryIndex,
+      agentName: agentName ?? this.agentName,
+      isOnline: isOnline ?? this.isOnline,
+      isTogglingStatus: isTogglingStatus ?? this.isTogglingStatus,
+      unreadNotificationsCount:
+          unreadNotificationsCount ?? this.unreadNotificationsCount,
     );
   }
 }

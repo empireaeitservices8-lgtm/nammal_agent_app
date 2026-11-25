@@ -19,14 +19,19 @@ class ProfileRepository {
 
   Future<ProfileModel> getProfile() async {
     try {
-      final response = await _apiClient.get(ApiEndpoints.profile);
+      final response = await _apiClient.get(ApiEndpoints.dashboard);
       final data = response.data is Map<String, dynamic>
           ? response.data as Map<String, dynamic>
           : <String, dynamic>{};
-      return ProfileModel.fromJson(data);
+      final profile = ProfileModel.fromJson(data);
+      if (profile.agentStatus.isNotEmpty) {
+        await _storageService.saveAgentStatus(profile.agentStatus);
+      }
+      await _storageService.setIsApproved(profile.isApproved);
+      return profile;
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw ApiException(message: 'Failed to load profile: $e');
+      throw ApiException(message: 'Failed to load agent dashboard: $e');
     }
   }
 

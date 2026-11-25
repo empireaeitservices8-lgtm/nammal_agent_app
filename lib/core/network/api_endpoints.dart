@@ -1,20 +1,22 @@
 class ApiEndpoints {
-  // RBase URL
-  static const String baseUrl = 'https://nammaluser.pythonanywhere.com';
+  // Base URL
+  static const String baseUrl = 'https://nammalagent.pythonanywhere.com';
 
   // Request Timeouts
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
 
   // --- Auth Endpoints ---
-  static const String register = '/api/user/register/';
-  static const String sendOtp = '/api/user/send-otp/';
-  static const String verifyOtp = '/api/user/verify-otp/';
-  static const String login = '/api/user/login/';
+  static const String register = '/api/agent/register/';
+  static const String sendOtp = '/api/agent/send-otp/';
+  static const String verifyOtp = '/api/agent/verify-otp/';
+  static const String login = '/api/agent/login/';
   static const String logout = '/api/logout/';
 
-  // --- User Profile ---
-  static const String profile = '/api/user/profile/';
+  // --- Agent Profile & Dashboard ---
+  static const String dashboard = '/api/agent/dashboard/';
+  static const String profile = '/api/agent/dashboard/';
+  static const String toggleStatus = '/api/agent/toggle-status/';
   static const String avatar = '/api/user/avatar/';
   static const String deleteAccount = '/api/delete-account/';
 

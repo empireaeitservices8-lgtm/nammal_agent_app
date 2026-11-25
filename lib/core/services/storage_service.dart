@@ -18,6 +18,10 @@ class StorageService {
   static const String _keyPhone = 'phone_number';
   static const String _keyUserName = 'user_name';
   static const String _keyIsNewUser = 'is_new_user';
+  static const String _keyRole = 'user_role';
+  static const String _keyAgentStatus = 'agent_status';
+  static const String _keyIsApproved = 'is_approved';
+  static const String _keyCanCall = 'can_call';
 
   Future<void> init() async {
     _prefs ??= await SharedPreferences.getInstance();
@@ -76,6 +80,38 @@ class StorageService {
 
   bool isLoggedIn() {
     return _prefs?.getBool(_keyIsLoggedIn) ?? false;
+  }
+
+  Future<void> saveRole(String role) async {
+    await _prefs?.setString(_keyRole, role);
+  }
+
+  String? getRole() {
+    return _prefs?.getString(_keyRole);
+  }
+
+  Future<void> saveAgentStatus(String status) async {
+    await _prefs?.setString(_keyAgentStatus, status);
+  }
+
+  String? getAgentStatus() {
+    return _prefs?.getString(_keyAgentStatus);
+  }
+
+  Future<void> setIsApproved(bool isApproved) async {
+    await _prefs?.setBool(_keyIsApproved, isApproved);
+  }
+
+  bool isApproved() {
+    return _prefs?.getBool(_keyIsApproved) ?? false;
+  }
+
+  Future<void> setCanCall(bool canCall) async {
+    await _prefs?.setBool(_keyCanCall, canCall);
+  }
+
+  bool canCall() {
+    return _prefs?.getBool(_keyCanCall) ?? false;
   }
 
   //Clear Session (Logout)

@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/config/app_colors.dart';
 import '../../../core/routing/app_router.dart';
-import '../viewmodels/auth_viewmodel.dart';
 import '../models/auth_state.dart';
+import '../models/send_otp_response.dart';
+import '../models/verify_otp_response.dart';
+import '../viewmodels/auth_viewmodel.dart';
 
 class OtpVerificationScreen extends ConsumerStatefulWidget {
   final String phoneNumber;
@@ -28,24 +30,45 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
   }
 
   Future<void> _handleVerify(String otp) async {
-    final success = await ref
+    final cleanOtp = otp.trim();
+    if (cleanOtp.length < 4) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a 4-digit verification code'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    final response = await ref
         .read(authViewModelProvider.notifier)
-        .verifyOtp(otp);
+        .verifyOtp(otp: cleanOtp, phoneNumber: widget.phoneNumber);
 
     if (mounted) {
-      final state = ref.read(authViewModelProvider);
-      if (success) {
-        if (state.status == AuthStatus.needsOnboarding) {
+      if (response != null &&
+          (response.otpVerified || response.token != null)) {
+        if (response.message.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response.message),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+
+        if (response.nextStep == 'onboarding' ||
+            response.user?.isProfileComplete == false) {
           context.go(AppRoutes.onboarding);
         } else {
           context.go(AppRoutes.home);
         }
       } else {
+        final error =
+            ref.read(authViewModelProvider).errorMessage ??
+            'Invalid OTP code. Please try again.';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(state.errorMessage ?? 'Invalid OTP code'),
-            backgroundColor: AppColors.error,
-          ),
+          SnackBar(content: Text(error), backgroundColor: AppColors.error),
         );
       }
     }
@@ -139,7 +162,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                     ),
                   ),
                   onChanged: (value) {
-                    if (value.length == 6 && !isLoading) {
+                    if (value.length == 4 && !isLoading) {
                       _handleVerify(value);
                     }
                   },
@@ -185,14 +208,39 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
 
                 // Resend OTP
                 TextButton(
-                  onPressed: () {
-                    ref
-                        .read(authViewModelProvider.notifier)
-                        .sendOtp(widget.phoneNumber);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('OTP Resent successfully')),
-                    );
-                  },
+                  onPressed: isLoading
+                      ? null
+                      : () async {
+                          final res = await ref
+                              .read(authViewModelProvider.notifier)
+                              .sendOtp(widget.phoneNumber);
+                          if (mounted) {
+                            if (res != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    res.otp != null && res.otp!.isNotEmpty
+                                        ? '${res.message} (OTP: ${res.otp})'
+                                        : res.message,
+                                  ),
+                                  backgroundColor: AppColors.success,
+                                ),
+                              );
+                            } else {
+                              final error =
+                                  ref
+                                      .read(authViewModelProvider)
+                                      .errorMessage ??
+                                  'Failed to resend OTP';
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(error),
+                                  backgroundColor: AppColors.error,
+                                ),
+                              );
+                            }
+                          }
+                        },
                   child: const Text(
                     'Didn\'t receive code? Resend OTP',
                     style: TextStyle(

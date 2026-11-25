@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+
 import '../models/auth_state.dart';
+import '../models/send_otp_response.dart';
+import '../models/verify_otp_response.dart';
 import '../repositories/auth_repository.dart';
 
 class AuthViewModel extends Notifier<AuthState> {
@@ -11,40 +14,100 @@ class AuthViewModel extends Notifier<AuthState> {
 
   AuthRepository get _repository => ref.read(authRepositoryProvider);
 
-  Future<bool> sendOtp(String phoneNumber) async {
+  Future<SendOtpResponse?> sendOtp(String phoneNumber) async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
-      await _repository.sendOtp(phoneNumber);
+      final response = await _repository.sendOtp(phoneNumber);
       state = state.copyWith(
         status: AuthStatus.initial,
-        phoneNumber: phoneNumber,
+        phoneNumber: response.phoneNumber.isNotEmpty
+            ? response.phoneNumber
+            : phoneNumber,
         isOtpSent: true,
+        otpResponse: response,
       );
-      return true;
+      return response;
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.error,
         errorMessage: e.toString(),
       );
-      return false;
+      return null;
     }
   }
 
-  Future<bool> verifyOtp(String otp, {String? fcmToken}) async {
-    if (state.phoneNumber == null) return false;
+  Future<VerifyOtpResponse?> verifyOtp({
+    required String otp,
+    String? phoneNumber,
+    String? fcmToken,
+  }) async {
+    final phoneToVerify = phoneNumber ?? state.phoneNumber;
+    if (phoneToVerify == null || phoneToVerify.isEmpty) {
+      state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: 'Phone number is missing',
+      );
+      return null;
+    }
+
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
-      final user = await _repository.verifyOtp(
-        phoneNumber: state.phoneNumber!,
+      final response = await _repository.verifyOtp(
+        phoneNumber: phoneToVerify,
         otp: otp,
         fcmToken: fcmToken,
       );
 
-      final nextStatus = user.isProfileComplete
-          ? AuthStatus.authenticated
-          : AuthStatus.needsOnboarding;
+      final nextStatus =
+          (response.nextStep == 'onboarding' ||
+              response.user?.isProfileComplete == false)
+          ? AuthStatus.needsOnboarding
+          : AuthStatus.authenticated;
 
-      state = state.copyWith(status: nextStatus, user: user);
+      state = state.copyWith(
+        status: nextStatus,
+        user: response.user,
+        verifyOtpResponse: response,
+      );
+      return response;
+    } catch (e) {
+      state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: e.toString(),
+      );
+      return null;
+    }
+  }
+
+  Future<bool> registerAgent({
+    required String name,
+    required String gender,
+    required String phoneNumber,
+    required String age,
+    required String dateOfBirth,
+    required String idType,
+    required String idNumber,
+    required String jurisdiction,
+    String? idPhotoPath,
+  }) async {
+    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    try {
+      final registerResponse = await _repository.registerAgent(
+        name: name,
+        gender: gender,
+        phoneNumber: phoneNumber,
+        age: age,
+        dateOfBirth: dateOfBirth,
+        idType: idType,
+        idNumber: idNumber,
+        jurisdiction: jurisdiction,
+        idPhotoPath: idPhotoPath,
+      );
+      state = state.copyWith(
+        status: AuthStatus.authenticated,
+        user: registerResponse.user,
+        registerResponse: registerResponse,
+      );
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -60,22 +123,16 @@ class AuthViewModel extends Notifier<AuthState> {
     required String gender,
     String? email,
   }) async {
-    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
-    try {
-      final user = await _repository.completeOnboarding(
-        name: name,
-        gender: gender,
-        email: email,
-      );
-      state = state.copyWith(status: AuthStatus.authenticated, user: user);
-      return true;
-    } catch (e) {
-      state = state.copyWith(
-        status: AuthStatus.error,
-        errorMessage: e.toString(),
-      );
-      return false;
-    }
+    return registerAgent(
+      name: name,
+      gender: gender,
+      phoneNumber: state.phoneNumber ?? '',
+      age: '18',
+      dateOfBirth: '',
+      idType: 'Aadhaar Card',
+      idNumber: '',
+      jurisdiction: '',
+    );
   }
 
   Future<void> logout() async {
@@ -85,5 +142,6 @@ class AuthViewModel extends Notifier<AuthState> {
   }
 }
 
-final authViewModelProvider =
-    NotifierProvider<AuthViewModel, AuthState>(AuthViewModel.new);
+final authViewModelProvider = NotifierProvider<AuthViewModel, AuthState>(
+  AuthViewModel.new,
+);
