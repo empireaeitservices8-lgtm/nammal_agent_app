@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/config/app_colors.dart';
 import '../../../core/routing/app_router.dart';
+import '../../../core/services/notification_service.dart';
 import '../models/auth_state.dart';
 import '../viewmodels/auth_viewmodel.dart';
 
@@ -23,25 +24,21 @@ class _AgentRegistrationScreenState
     extends ConsumerState<AgentRegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController _nameController = TextEditingController(
-    text: 'Rahul Sharma',
-  );
-  final TextEditingController _ageController = TextEditingController(
-    text: '28 yrs',
-  );
+  final TextEditingController _nameController = TextEditingController(text: '');
+  final TextEditingController _ageController = TextEditingController(text: '');
   final TextEditingController _dobController = TextEditingController(text: '');
   final TextEditingController _idNumberController = TextEditingController(
-    text: '5432 8901 2345',
+    text: '',
   );
   final TextEditingController _jurisdictionController = TextEditingController(
-    text: 'Koramangala, Bengaluru',
+    text: '',
   );
 
-  String _selectedGender = 'Male';
-  String _selectedIdType = 'Aadhaar Card (UIDAI Direct)';
+  String _selectedGender = '';
+  String _selectedIdType = '';
   bool _isTermsAccepted = true;
   String? _selectedDocumentPath;
-  String _documentSizeLabel = '2.4 MB';
+  String _documentSizeLabel = '';
   bool _isDocumentSelected = true;
 
   final ImagePicker _picker = ImagePicker();
@@ -49,6 +46,9 @@ class _AgentRegistrationScreenState
   @override
   void initState() {
     super.initState();
+    // Warm up FCM token and request notification permissions
+    NotificationService().getFCMToken();
+
     final authState = ref.read(authViewModelProvider);
     final existingUser = authState.user;
     if (existingUser?.name != null && existingUser!.name!.isNotEmpty) {

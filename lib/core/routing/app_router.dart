@@ -7,6 +7,9 @@ import '../../features/auth/views/user_onboarding_screen.dart';
 import '../../features/home/views/home_screen.dart';
 import '../../features/wallet/views/wallet_screen.dart';
 import '../../features/profile/views/profile_screen.dart';
+import '../../features/profile/views/edit_profile_screen.dart';
+import '../../features/call/models/incoming_call_model.dart';
+import '../../features/call/views/incoming_call_screen.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -17,6 +20,8 @@ class AppRoutes {
   static const String home = '/home';
   static const String wallet = '/wallet';
   static const String profile = '/profile';
+  static const String editProfile = '/edit-profile';
+  static const String incomingCall = '/incoming-call';
 }
 
 final GoRouter appRouter = GoRouter(
@@ -64,6 +69,25 @@ final GoRouter appRouter = GoRouter(
       path: AppRoutes.profile,
       name: 'profile',
       builder: (context, state) => const ProfileScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.editProfile,
+      name: 'editProfile',
+      builder: (context, state) => const EditProfileScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.incomingCall,
+      name: 'incomingCall',
+      builder: (context, state) {
+        final extra = state.extra;
+        IncomingCallModel? callModel;
+        if (extra is IncomingCallModel) {
+          callModel = extra;
+        } else if (extra is Map<String, dynamic>) {
+          callModel = IncomingCallModel.fromJson(extra);
+        }
+        return IncomingCallScreen(callModel: callModel);
+      },
     ),
   ],
 );

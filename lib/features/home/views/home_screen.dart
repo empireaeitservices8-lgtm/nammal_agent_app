@@ -1,8 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/config/app_colors.dart';
+import '../../../core/routing/app_router.dart';
 import '../../auth/viewmodels/auth_viewmodel.dart';
+import '../../call/models/incoming_call_model.dart';
+import '../../profile/models/profile_model.dart';
 import '../../profile/views/profile_screen.dart';
 import '../../wallet/views/wallet_screen.dart';
 import '../models/handled_call_model.dart';
@@ -19,6 +25,14 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(homeViewModelProvider.notifier).fetchHomeData();
+    });
+  }
+
   final List<Widget> _pages = const [
     _AgentHomeView(),
     WalletScreen(),
@@ -34,7 +48,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border(
-            top: BorderSide(color: AppColors.borderSubtle.withValues(alpha: 0.6)),
+            top: BorderSide(
+              color: AppColors.borderSubtle.withValues(alpha: 0.6),
+            ),
           ),
           boxShadow: [
             BoxShadow(
@@ -100,9 +116,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               child: Icon(
                 isSelected ? selectedIcon : icon,
-                color: isSelected
-                    ? AppColors.primary
-                    : AppColors.textSecondary,
+                color: isSelected ? AppColors.primary : AppColors.textSecondary,
                 size: 24,
               ),
             ),
@@ -112,9 +126,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected
-                    ? AppColors.primary
-                    : AppColors.textSecondary,
+                color: isSelected ? AppColors.primary : AppColors.textSecondary,
               ),
             ),
           ],
@@ -131,30 +143,40 @@ class _AgentHomeView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final homeState = ref.watch(homeViewModelProvider);
     final authState = ref.watch(authViewModelProvider);
+    final dashboard = homeState.dashboard;
+    final agent = homeState.agentDetails ?? dashboard?.agent;
 
-    final agentName = authState.user?.name?.isNotEmpty == true
-        ? authState.user!.name!
-        : homeState.agentName;
+    final agentName = (agent?.name.isNotEmpty == true)
+        ? agent!.name
+        : (authState.user?.name?.isNotEmpty == true
+              ? authState.user!.name!
+              : (agent?.username.isNotEmpty == true
+                    ? agent!.username
+                    : (authState.user?.username?.isNotEmpty == true
+                          ? authState.user!.username!
+                          : homeState.agentName)));
 
-    final agent = homeState.agentDetails;
+    final isApproved = dashboard?.isApproved ?? agent?.isApproved ?? false;
+    final avatar = authState.user?.avatar ?? dashboard?.avatar;
 
-    final totalEarningsFormatted = (agent != null && agent.totalEarnings > 0)
-        ? '₹${agent.totalEarnings.toStringAsFixed(0)}'
-        : '₹14,280';
+    final totalEarnings = agent?.totalEarnings ?? 0.0;
+    final totalEarningsFormatted = '₹${totalEarnings.toStringAsFixed(0)}';
 
-    final rewardCoinsFormatted = (agent != null && agent.coinsEarned > 0)
-        ? '${agent.coinsEarned}'
-        : '4,850';
+    final rewardCoins = agent?.coinsEarned ?? 0;
+    final rewardCoinsFormatted = '$rewardCoins';
 
-    final loggedTimeFormatted = (agent != null &&
-            agent.totalDurationFormatted != '0h 0m' &&
-            agent.totalDurationFormatted.isNotEmpty)
-        ? agent.totalDurationFormatted
-        : '38h 45m';
+    final todayEarnings = agent?.todayEarnings ?? 0.0;
+    final todayCoinsBadge = '+₹${todayEarnings.toStringAsFixed(0)} today';
 
-    final calls = homeState.recentCalls.isNotEmpty
-        ? homeState.recentCalls
-        : HandledCallModel.sampleCalls;
+    final loggedTimeFormatted =
+        (agent?.totalDurationFormatted.isNotEmpty == true)
+        ? agent!.totalDurationFormatted
+        : '0h 0m';
+
+    final todayDurationBadge =
+        '+${(agent?.todayDurationFormatted.isNotEmpty == true) ? agent!.todayDurationFormatted : "0h 0m"}';
+
+    final calls = homeState.recentCalls;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFBFBFE),
@@ -165,7 +187,10 @@ class _AgentHomeView extends ConsumerWidget {
           color: AppColors.primary,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20.0,
+              vertical: 12.0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -181,7 +206,14 @@ class _AgentHomeView extends ConsumerWidget {
                   agentName: agentName,
                   isOnline: homeState.isOnline,
                   isToggling: homeState.isTogglingStatus,
+                  isApproved: isApproved,
+                  avatarUrl: avatar,
                 ),
+
+                if (!isApproved) ...[
+                  const SizedBox(height: 12),
+                  _buildPendingApprovalBanner(),
+                ],
 
                 const SizedBox(height: 24),
 
@@ -207,10 +239,10 @@ class _AgentHomeView extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: _buildMetricCard(
-                        icon: Icons.attach_money_rounded,
+                        icon: Icons.monetization_on_rounded,
                         iconColor: const Color(0xFFD97706),
                         iconBgColor: const Color(0xFFFFFBEB),
-                        badgeText: '+320 today',
+                        badgeText: todayCoinsBadge,
                         badgeTextColor: const Color(0xFFB45309),
                         badgeBgColor: const Color(0xFFFEF3C7),
                         title: 'Reward Coins',
@@ -223,7 +255,7 @@ class _AgentHomeView extends ConsumerWidget {
                         icon: Icons.timer_outlined,
                         iconColor: const Color(0xFF6B42FF),
                         iconBgColor: const Color(0xFFF0ECFF),
-                        badgeText: '+6h 15m',
+                        badgeText: todayDurationBadge,
                         badgeTextColor: const Color(0xFF6B42FF),
                         badgeBgColor: const Color(0xFFF3EEFF),
                         title: 'Logged Time',
@@ -232,6 +264,11 @@ class _AgentHomeView extends ConsumerWidget {
                     ),
                   ],
                 ),
+
+                if (dashboard != null) ...[
+                  const SizedBox(height: 24),
+                  _buildTasksSnapshot(dashboard.tasks),
+                ],
 
                 const SizedBox(height: 28),
 
@@ -256,49 +293,53 @@ class _AgentHomeView extends ConsumerWidget {
                       ),
                     ),
                     const Spacer(),
-                    InkWell(
-                      onTap: () {},
-                      borderRadius: BorderRadius.circular(8),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 2,
-                        ),
-                        child: Row(
-                          children: const [
-                            Text(
-                              'View All',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
+                    if (calls.isNotEmpty)
+                      InkWell(
+                        onTap: () {},
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 2,
+                          ),
+                          child: Row(
+                            children: const [
+                              Text(
+                                'View All',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF5B1FE2),
+                                ),
+                              ),
+                              SizedBox(width: 2),
+                              Icon(
+                                Icons.arrow_forward_rounded,
+                                size: 14,
                                 color: Color(0xFF5B1FE2),
                               ),
-                            ),
-                            SizedBox(width: 2),
-                            Icon(
-                              Icons.arrow_forward_rounded,
-                              size: 14,
-                              color: Color(0xFF5B1FE2),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
 
                 const SizedBox(height: 14),
 
-                // List of Handled Call Cards
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: calls.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    return _buildCallItemCard(calls[index]);
-                  },
-                ),
+                // List of Handled Call Cards or Empty State
+                if (calls.isNotEmpty)
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: calls.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      return _buildCallItemCard(context, calls[index]);
+                    },
+                  )
+                else
+                  _buildEmptyCallsCard(),
 
                 const SizedBox(height: 24),
               ],
@@ -312,21 +353,6 @@ class _AgentHomeView extends ConsumerWidget {
   Widget _buildTopBrandHeader() {
     return Row(
       children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: const Color(0xFF5B1FE2),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: const Center(
-            child: Icon(
-              Icons.support_agent_rounded,
-              color: Colors.white,
-              size: 20,
-            ),
-          ),
-        ),
         const SizedBox(width: 10),
         const Text(
           'Home',
@@ -343,11 +369,7 @@ class _AgentHomeView extends ConsumerWidget {
             color: Color(0xFF5B1FE2),
             shape: BoxShape.circle,
           ),
-          child: const Icon(
-            Icons.person,
-            size: 12,
-            color: Colors.white,
-          ),
+          child: const Icon(Icons.person, size: 12, color: Colors.white),
         ),
       ],
     );
@@ -359,6 +381,8 @@ class _AgentHomeView extends ConsumerWidget {
     required String agentName,
     required bool isOnline,
     required bool isToggling,
+    required bool isApproved,
+    String? avatarUrl,
   }) {
     return Container(
       padding: const EdgeInsets.all(14),
@@ -390,39 +414,25 @@ class _AgentHomeView extends ConsumerWidget {
                     width: 2,
                   ),
                 ),
-                child: ClipOval(
-                  child: Image.network(
-                    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => Container(
-                      color: const Color(0xFFEDE8FF),
-                      child: const Center(
-                        child: Icon(
-                          Icons.person,
-                          color: AppColors.primary,
-                          size: 28,
-                        ),
-                      ),
+                child: ClipOval(child: _buildAvatarImage(avatarUrl, agentName)),
+              ),
+              if (isApproved)
+                Positioned(
+                  bottom: -2,
+                  right: -2,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check_circle_rounded,
+                      color: Color(0xFF5B1FE2),
+                      size: 18,
                     ),
                   ),
                 ),
-              ),
-              Positioned(
-                bottom: -2,
-                right: -2,
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.check_circle_rounded,
-                    color: Color(0xFF5B1FE2),
-                    size: 18,
-                  ),
-                ),
-              ),
             ],
           ),
 
@@ -483,8 +493,9 @@ class _AgentHomeView extends ConsumerWidget {
                         .read(homeViewModelProvider.notifier)
                         .toggleOnlineStatus();
                     if (context.mounted && message != null) {
-                      final updatedOnline =
-                          ref.read(homeViewModelProvider).isOnline;
+                      final updatedOnline = ref
+                          .read(homeViewModelProvider)
+                          .isOnline;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(message),
@@ -511,8 +522,9 @@ class _AgentHomeView extends ConsumerWidget {
               child: AnimatedAlign(
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeInOut,
-                alignment:
-                    isOnline ? Alignment.centerRight : Alignment.centerLeft,
+                alignment: isOnline
+                    ? Alignment.centerRight
+                    : Alignment.centerLeft,
                 child: Container(
                   width: 24,
                   height: 24,
@@ -696,10 +708,340 @@ class _AgentHomeView extends ConsumerWidget {
     );
   }
 
-  Widget _buildCallItemCard(HandledCallModel call) {
+  Widget _buildCallItemCard(BuildContext context, HandledCallModel call) {
     final isCompleted = call.status.toLowerCase() == 'completed';
 
+    return InkWell(
+      onTap: () {
+        context.push(
+          AppRoutes.incomingCall,
+          extra: IncomingCallModel(
+            callId: call.id,
+            callerName: call.callerName,
+            callerPhone: '9876543210',
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.borderSubtle),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                // Initials Circle
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEDE8FF),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Center(
+                    child: Text(
+                      call.initials,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF5B1FE2),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                // Caller Name & Time
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        call.callerName,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.south_west_rounded,
+                            size: 13,
+                            color: Color(0xFF10B981),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            call.timeAgo,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Status Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isCompleted
+                        ? const Color(0xFFE8F8F0)
+                        : const Color(0xFFF3EEFF),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.check_circle_rounded,
+                        size: 12,
+                        color: isCompleted
+                            ? const Color(0xFF10B981)
+                            : const Color(0xFF6B42FF),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        call.status,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: isCompleted
+                              ? const Color(0xFF10B981)
+                              : const Color(0xFF6B42FF),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 14),
+
+            // Divider line
+            Container(
+              height: 1,
+              color: AppColors.borderSubtle.withValues(alpha: 0.5),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Bottom Detail Row: Duration + Coins + Earnings
+            Row(
+              children: [
+                // Duration
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFBFBFE),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.access_time_rounded,
+                        size: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        call.duration,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(width: 6),
+                const Text(
+                  '•',
+                  style: TextStyle(color: AppColors.textSecondary),
+                ),
+                const SizedBox(width: 6),
+
+                // Coins Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.monetization_on_rounded,
+                        size: 13,
+                        color: Color(0xFFD97706),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '+${call.coins} Coins',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFB45309),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Spacer(),
+
+                // Amount Earned
+                Text(
+                  '+₹${call.earnings.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF5B1FE2),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvatarImage(String? avatarUrl, String name) {
+    if (avatarUrl != null && avatarUrl.isNotEmpty) {
+      if (avatarUrl.startsWith('http')) {
+        return Image.network(
+          avatarUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => _buildInitialsAvatar(name),
+        );
+      } else {
+        final file = File(avatarUrl);
+        if (file.existsSync()) {
+          return Image.file(file, fit: BoxFit.cover);
+        }
+      }
+    }
+    return _buildInitialsAvatar(name);
+  }
+
+  Widget _buildInitialsAvatar(String name) {
+    final initial = name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : 'A';
     return Container(
+      color: const Color(0xFFEDE8FF),
+      child: Center(
+        child: Text(
+          initial,
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF5B1FE2),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPendingApprovalBanner() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Row(
+        children: const [
+          Icon(Icons.hourglass_top_rounded, color: Color(0xFFD97706), size: 18),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Account Pending Approval • Calling will be enabled once admin approves.',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFFB45309),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyCallsCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: Column(
+        children: const [
+          Icon(
+            Icons.phone_in_talk_outlined,
+            size: 44,
+            color: AppColors.textPlaceholder,
+          ),
+          SizedBox(height: 12),
+          Text(
+            'No Handled Calls Yet',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(height: 4),
+          Text(
+            'Calls assigned to you will appear here once you go online.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTasksSnapshot(TasksModel tasks) {
+    return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -708,201 +1050,100 @@ class _AgentHomeView extends ConsumerWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              // Initials Circle
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEDE8FF),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Center(
-                  child: Text(
-                    call.initials,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF5B1FE2),
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(width: 12),
-
-              // Caller Name & Time
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      call.callerName,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.south_west_rounded,
-                          size: 13,
-                          color: Color(0xFF10B981),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          call.timeAgo,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              // Status Badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isCompleted
-                      ? const Color(0xFFE8F8F0)
-                      : const Color(0xFFF3EEFF),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.check_circle_rounded,
-                      size: 12,
-                      color: isCompleted
-                          ? const Color(0xFF10B981)
-                          : const Color(0xFF6B42FF),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      call.status,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: isCompleted
-                            ? const Color(0xFF10B981)
-                            : const Color(0xFF6B42FF),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 14),
-
-          // Divider line
-          Container(
-            height: 1,
-            color: AppColors.borderSubtle.withValues(alpha: 0.5),
-          ),
-
-          const SizedBox(height: 12),
-
-          // Bottom Detail Row: Duration + Coins + Earnings
-          Row(
-            children: [
-              // Duration
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFBFBFE),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.access_time_rounded,
-                      size: 13,
-                      color: AppColors.textSecondary,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      call.duration,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(width: 6),
-              const Text(
-                '•',
-                style: TextStyle(color: AppColors.textSecondary),
-              ),
-              const SizedBox(width: 6),
-
-              // Coins Badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.monetization_on_rounded,
-                      size: 13,
-                      color: Color(0xFFD97706),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '+${call.coins} Coins',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFFB45309),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const Spacer(),
-
-              // Amount Earned
-              Text(
-                '+₹${call.earnings.toStringAsFixed(0)}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF5B1FE2),
-                ),
-              ),
-            ],
-          ),
+          // Row(
+          //   children: const [
+          //     Icon(Icons.task_alt_rounded, size: 18, color: Color(0xFF5B1FE2)),
+          //     SizedBox(width: 8),
+          //     Text(
+          //       'Tasks & Targets',
+          //       style: TextStyle(
+          //         fontSize: 15,
+          //         fontWeight: FontWeight.bold,
+          //         color: AppColors.textPrimary,
+          //       ),
+          //     ),
+          //   ],
+          // ),
+          // const SizedBox(height: 14),
+          // _buildTaskProgressItem(
+          //   label: 'Daily Target',
+          //   completed: tasks.daily.completed,
+          //   target: tasks.daily.target,
+          //   percentage: tasks.daily.progressPercentage,
+          //   color: const Color(0xFF5B1FE2),
+          // ),
+          // const SizedBox(height: 12),
+          // _buildTaskProgressItem(
+          //   label: 'Weekly Target',
+          //   completed: tasks.weekly.completed,
+          //   target: tasks.weekly.target,
+          //   percentage: tasks.weekly.progressPercentage,
+          //   color: const Color(0xFF06B6D4),
+          // ),
+          // const SizedBox(height: 12),
+          // _buildTaskProgressItem(
+          //   label: 'Monthly Target',
+          //   completed: tasks.monthly.completed,
+          //   target: tasks.monthly.target,
+          //   percentage: tasks.monthly.progressPercentage,
+          //   color: const Color(0xFF10B981),
+          // ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTaskProgressItem({
+    required String label,
+    required int completed,
+    required int target,
+    required double percentage,
+    required Color color,
+  }) {
+    final progressVal = target > 0 ? (completed / target).clamp(0.0, 1.0) : 0.0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            Text(
+              '$completed / $target (${percentage.toStringAsFixed(0)}%)',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: LinearProgressIndicator(
+            value: progressVal,
+            minHeight: 6,
+            backgroundColor: const Color(0xFFF1F0F7),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+          ),
+        ),
+      ],
     );
   }
 }

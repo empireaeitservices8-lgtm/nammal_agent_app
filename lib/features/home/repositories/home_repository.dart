@@ -15,15 +15,12 @@ class HomeRepository {
 
   HomeRepository(this._apiClient);
 
-  Future<AgentDetailsModel?> getAgentDashboard() async {
+  Future<ProfileModel?> getAgentDashboard() async {
     try {
       final response = await _apiClient.get(ApiEndpoints.dashboard);
       final data = response.data;
-      if (data is Map<String, dynamic> &&
-          data['agent'] is Map<String, dynamic>) {
-        return AgentDetailsModel.fromJson(
-          data['agent'] as Map<String, dynamic>,
-        );
+      if (data is Map<String, dynamic>) {
+        return ProfileModel.fromJson(data);
       }
       return null;
     } catch (e) {
@@ -68,9 +65,9 @@ class HomeRepository {
             .map((e) => HandledCallModel.fromJson(e as Map<String, dynamic>))
             .toList();
       }
-      return HandledCallModel.sampleCalls;
+      return const [];
     } catch (_) {
-      return HandledCallModel.sampleCalls;
+      return const [];
     }
   }
 }

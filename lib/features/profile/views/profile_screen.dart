@@ -19,7 +19,7 @@ class ProfileScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Agent Profile & Dashboard',
+          'Agent Profile',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
@@ -48,16 +48,21 @@ class ProfileScreen extends ConsumerWidget {
                           alpha: 0.15,
                         ),
                         child: const Icon(
-                          Icons.support_agent_rounded,
+                          Icons.person_rounded,
                           size: 46,
                           color: AppColors.primary,
                         ),
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        profile?.agent.username.isNotEmpty == true
-                            ? 'Agent ${profile!.agent.username}'
-                            : (profile?.name ?? 'Agent'),
+                        profile?.agent.name.isNotEmpty == true
+                            ? profile!.agent.name
+                            : (profile?.name.isNotEmpty == true &&
+                                      profile!.name != 'Agent'
+                                  ? profile.name
+                                  : (profile?.agent.username.isNotEmpty == true
+                                        ? 'Agent ${profile!.agent.username}'
+                                        : 'Agent')),
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -105,7 +110,7 @@ class ProfileScreen extends ConsumerWidget {
                       _buildTile(
                         icon: Icons.person_outline,
                         title: 'Edit Profile',
-                        onTap: () {},
+                        onTap: () => context.push(AppRoutes.editProfile),
                       ),
                       const Divider(height: 1, color: AppColors.borderSubtle),
                       _buildTile(

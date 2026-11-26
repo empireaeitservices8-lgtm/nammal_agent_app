@@ -62,7 +62,10 @@ class TasksModel {
 }
 
 class AgentDetailsModel {
+  final int? id;
+  final String name;
   final String username;
+  final String phoneNumber;
   final String agentStatus;
   final bool isApproved;
   final bool canCall;
@@ -79,7 +82,10 @@ class AgentDetailsModel {
   final double agentRating;
 
   const AgentDetailsModel({
+    this.id,
+    this.name = '',
     this.username = '',
+    this.phoneNumber = '',
     this.agentStatus = 'pending',
     this.isApproved = false,
     this.canCall = false,
@@ -98,7 +104,10 @@ class AgentDetailsModel {
 
   factory AgentDetailsModel.fromJson(Map<String, dynamic> json) {
     return AgentDetailsModel(
+      id: (json['id'] as num?)?.toInt(),
+      name: json['name']?.toString() ?? '',
       username: json['username']?.toString() ?? '',
+      phoneNumber: json['phone_number']?.toString() ?? '',
       agentStatus: json['agent_status']?.toString() ?? 'pending',
       isApproved: json['is_approved'] == true,
       canCall: json['can_call'] == true,
@@ -122,7 +131,10 @@ class AgentDetailsModel {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
+      'name': name,
       'username': username,
+      'phone_number': phoneNumber,
       'agent_status': agentStatus,
       'is_approved': isApproved,
       'can_call': canCall,
@@ -148,15 +160,49 @@ class ProfileModel {
   final bool canCall;
   final AgentDetailsModel agent;
   final TasksModel tasks;
+  final Map<String, dynamic> rawJson;
 
   // Convenience getters for backwards compatibility with UI
-  String get id => agent.username;
+  String get id =>
+      (agent.id != null ? agent.id.toString() : null) ??
+      rawJson['id']?.toString() ??
+      rawJson['user_id']?.toString() ??
+      agent.username;
   String get name =>
-      agent.username.isNotEmpty ? 'Agent ${agent.username}' : 'Agent';
-  String? get phoneNumber => agent.username;
-  String? get email => null;
-  String? get gender => null;
-  String? get avatar => null;
+      agent.name.isNotEmpty
+          ? agent.name
+          : (rawJson['name']?.toString() ??
+              rawJson['profile']?['name']?.toString() ??
+              (agent.username.isNotEmpty ? agent.username : 'Agent'));
+  String? get phoneNumber =>
+      agent.phoneNumber.isNotEmpty
+          ? agent.phoneNumber
+          : (rawJson['phone_number']?.toString() ??
+              rawJson['profile']?['phone_number']?.toString() ??
+              agent.username);
+  String? get email => rawJson['email']?.toString();
+  String? get gender =>
+      rawJson['gender']?.toString() ?? rawJson['profile']?['gender']?.toString();
+  String? get avatar =>
+      rawJson['avatar']?.toString() ??
+      rawJson['profile_picture']?.toString() ??
+      rawJson['profile']?['profile_picture']?.toString();
+  String? get bio =>
+      rawJson['bio']?.toString() ??
+      rawJson['profile']?['bio']?.toString() ??
+      rawJson['agent']?['bio']?.toString();
+  String? get dateOfBirth =>
+      rawJson['date_of_birth']?.toString() ??
+      rawJson['date_of_birth_display']?.toString() ??
+      rawJson['profile']?['date_of_birth']?.toString() ??
+      rawJson['profile']?['date_of_birth_display']?.toString() ??
+      rawJson['dob']?.toString();
+  String? get idType =>
+      rawJson['id_type']?.toString() ??
+      rawJson['profile']?['id_type']?.toString();
+  String? get idNumber =>
+      rawJson['id_number']?.toString() ??
+      rawJson['profile']?['id_number']?.toString();
   int get totalCalls => agent.callsCompleted;
   double get rating => agent.agentRating;
   double get walletBalance => agent.walletBalance;
@@ -170,6 +216,7 @@ class ProfileModel {
     this.canCall = false,
     this.agent = const AgentDetailsModel(),
     this.tasks = const TasksModel(),
+    this.rawJson = const {},
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
@@ -191,6 +238,7 @@ class ProfileModel {
       canCall: json['can_call'] == true || agentData['can_call'] == true,
       agent: AgentDetailsModel.fromJson(agentData),
       tasks: TasksModel.fromJson(tasksData),
+      rawJson: json,
     );
   }
 

@@ -1,5 +1,6 @@
 class UserModel {
   final String id;
+  final String? username;
   final String? phoneNumber;
   final String? name;
   final String? email;
@@ -16,9 +17,14 @@ class UserModel {
   final int walletBalance;
   final int todayCompletedCalls;
   final int dailyCallTarget;
+  final String? bio;
+  final String? dateOfBirth;
+  final String? idType;
+  final String? idNumber;
 
   UserModel({
     required this.id,
+    this.username,
     this.phoneNumber,
     this.name,
     this.email,
@@ -35,6 +41,10 @@ class UserModel {
     this.walletBalance = 0,
     this.todayCompletedCalls = 0,
     this.dailyCallTarget = 50,
+    this.bio,
+    this.dateOfBirth,
+    this.idType,
+    this.idNumber,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -59,6 +69,8 @@ class UserModel {
           json['id']?.toString() ??
           json['user_id']?.toString() ??
           '',
+      username:
+          userMap['username']?.toString() ?? json['username']?.toString(),
       phoneNumber:
           userMap['phone_number']?.toString() ??
           profileMap?['phone_number']?.toString() ??
@@ -104,12 +116,27 @@ class UserModel {
           (json['daily_call_target'] as num?)?.toInt() ??
           (userMap['daily_call_target'] as num?)?.toInt() ??
           50,
+      bio: profileMap?['bio']?.toString() ??
+          userMap['bio']?.toString() ??
+          json['bio']?.toString(),
+      dateOfBirth: profileMap?['date_of_birth']?.toString() ??
+          profileMap?['date_of_birth_display']?.toString() ??
+          userMap['date_of_birth']?.toString() ??
+          json['date_of_birth']?.toString() ??
+          json['dob']?.toString(),
+      idType: profileMap?['id_type']?.toString() ??
+          userMap['id_type']?.toString() ??
+          json['id_type']?.toString(),
+      idNumber: profileMap?['id_number']?.toString() ??
+          userMap['id_number']?.toString() ??
+          json['id_number']?.toString(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'username': username,
       'phone_number': phoneNumber,
       'name': name,
       'email': email,
@@ -126,11 +153,16 @@ class UserModel {
       'wallet_balance': walletBalance,
       'today_completed_calls': todayCompletedCalls,
       'daily_call_target': dailyCallTarget,
+      'bio': bio,
+      'date_of_birth': dateOfBirth,
+      'id_type': idType,
+      'id_number': idNumber,
     };
   }
 
   UserModel copyWith({
     String? id,
+    String? username,
     String? phoneNumber,
     String? name,
     String? email,
@@ -147,9 +179,14 @@ class UserModel {
     int? walletBalance,
     int? todayCompletedCalls,
     int? dailyCallTarget,
+    String? bio,
+    String? dateOfBirth,
+    String? idType,
+    String? idNumber,
   }) {
     return UserModel(
       id: id ?? this.id,
+      username: username ?? this.username,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       name: name ?? this.name,
       email: email ?? this.email,
@@ -166,6 +203,10 @@ class UserModel {
       walletBalance: walletBalance ?? this.walletBalance,
       todayCompletedCalls: todayCompletedCalls ?? this.todayCompletedCalls,
       dailyCallTarget: dailyCallTarget ?? this.dailyCallTarget,
+      bio: bio ?? this.bio,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      idType: idType ?? this.idType,
+      idNumber: idNumber ?? this.idNumber,
     );
   }
 }

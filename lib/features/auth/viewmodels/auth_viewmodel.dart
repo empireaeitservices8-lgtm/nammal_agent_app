@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 
+import '../../../core/services/notification_service.dart';
 import '../models/auth_state.dart';
 import '../models/send_otp_response.dart';
 import '../models/verify_otp_response.dart';
@@ -13,6 +13,8 @@ class AuthViewModel extends Notifier<AuthState> {
   }
 
   AuthRepository get _repository => ref.read(authRepositoryProvider);
+  NotificationService get _notificationService =>
+      ref.read(notificationServiceProvider);
 
   Future<SendOtpResponse?> sendOtp(String phoneNumber) async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
@@ -52,10 +54,11 @@ class AuthViewModel extends Notifier<AuthState> {
 
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
+      final token = fcmToken ?? await _notificationService.getFCMToken();
       final response = await _repository.verifyOtp(
         phoneNumber: phoneToVerify,
         otp: otp,
-        fcmToken: fcmToken,
+        fcmToken: token,
       );
 
       final nextStatus =
@@ -89,9 +92,11 @@ class AuthViewModel extends Notifier<AuthState> {
     required String idNumber,
     required String jurisdiction,
     String? idPhotoPath,
+    String? fcmToken,
   }) async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
+      final token = fcmToken ?? await _notificationService.getFCMToken();
       final registerResponse = await _repository.registerAgent(
         name: name,
         gender: gender,
@@ -102,6 +107,7 @@ class AuthViewModel extends Notifier<AuthState> {
         idNumber: idNumber,
         jurisdiction: jurisdiction,
         idPhotoPath: idPhotoPath,
+        fcmToken: token,
       );
       state = state.copyWith(
         status: AuthStatus.authenticated,
@@ -137,6 +143,9 @@ class AuthViewModel extends Notifier<AuthState> {
 
   Future<void> logout() async {
     state = state.copyWith(status: AuthStatus.loading);
+    try {
+      await _notificationService.deleteFCMToken();
+    } catch (_) {}
     await _repository.logout();
     state = const AuthState(status: AuthStatus.unauthenticated);
   }

@@ -193,6 +193,7 @@ class AuthRepository {
     required String idNumber,
     required String jurisdiction,
     String? idPhotoPath,
+    String? fcmToken,
   }) async {
     try {
       final cleanPhone = phoneNumber.replaceAll(RegExp(r'[\s\-+]'), '');
@@ -257,6 +258,7 @@ class AuthRepository {
         'id_number': idNumber,
         'jurisdiction': jurisdiction,
         if (idProofPic != null) 'id_proof_pic': idProofPic,
+        if (fcmToken != null && fcmToken.isNotEmpty) 'fcm_token': fcmToken,
       });
 
       final response = await _apiClient.post(

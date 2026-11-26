@@ -16,6 +16,7 @@ class ApiEndpoints {
   // --- Agent Profile & Dashboard ---
   static const String dashboard = '/api/agent/dashboard/';
   static const String profile = '/api/agent/dashboard/';
+  static const String editProfile = '/api/agent/profile/edit/';
   static const String toggleStatus = '/api/agent/toggle-status/';
   static const String avatar = '/api/user/avatar/';
   static const String deleteAccount = '/api/delete-account/';

@@ -5,6 +5,7 @@ enum HomeStatus { initial, loading, loaded, error }
 
 class HomeState {
   final HomeStatus status;
+  final ProfileModel? dashboard;
   final AgentDetailsModel? agentDetails;
   final List<HandledCallModel> recentCalls;
   final String? errorMessage;
@@ -15,17 +16,19 @@ class HomeState {
 
   const HomeState({
     this.status = HomeStatus.initial,
+    this.dashboard,
     this.agentDetails,
     this.recentCalls = const [],
     this.errorMessage,
-    this.agentName = 'Rahul Sharma',
+    this.agentName = 'Agent',
     this.isOnline = true,
     this.isTogglingStatus = false,
-    this.unreadNotificationsCount = 3,
+    this.unreadNotificationsCount = 0,
   });
 
   HomeState copyWith({
     HomeStatus? status,
+    ProfileModel? dashboard,
     AgentDetailsModel? agentDetails,
     List<HandledCallModel>? recentCalls,
     String? errorMessage,
@@ -36,6 +39,7 @@ class HomeState {
   }) {
     return HomeState(
       status: status ?? this.status,
+      dashboard: dashboard ?? this.dashboard,
       agentDetails: agentDetails ?? this.agentDetails,
       recentCalls: recentCalls ?? this.recentCalls,
       errorMessage: errorMessage,

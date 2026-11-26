@@ -24,18 +24,34 @@ class ProfileViewModel extends Notifier<ProfileState> {
     }
   }
 
-  Future<bool> updateProfile({
+  Future<Map<String, dynamic>?> updateProfile({
     String? name,
     String? email,
     String? gender,
+    String? bio,
+    String? dob,
+    int? age,
+    String? idType,
+    String? idNumber,
+    String? avatarPath,
   }) async {
     try {
-      await _repository.updateProfile(name: name, email: email, gender: gender);
+      final res = await _repository.updateProfile(
+        name: name,
+        email: email,
+        gender: gender,
+        bio: bio,
+        dob: dob,
+        age: age,
+        idType: idType,
+        idNumber: idNumber,
+        avatarPath: avatarPath,
+      );
       await fetchProfile();
-      return true;
+      return res;
     } catch (e) {
       state = state.copyWith(errorMessage: e.toString());
-      return false;
+      return null;
     }
   }
 }

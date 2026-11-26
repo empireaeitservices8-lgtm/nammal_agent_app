@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/config/app_colors.dart';
 import '../../../core/routing/app_router.dart';
+import '../../../core/services/notification_service.dart';
 import '../models/auth_state.dart';
 import '../models/send_otp_response.dart';
 import '../models/verify_otp_response.dart';
@@ -22,6 +23,13 @@ class OtpVerificationScreen extends ConsumerStatefulWidget {
 
 class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
   final TextEditingController _otpController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Warm up FCM token and request notification permissions
+    NotificationService().getFCMToken();
+  }
 
   @override
   void dispose() {
