@@ -257,7 +257,7 @@ class AuthRepository {
         'id_type': idType,
         'id_number': idNumber,
         'jurisdiction': jurisdiction,
-        if (idProofPic != null) 'id_proof_pic': idProofPic,
+        'id_proof_pic': idProofPic,
         if (fcmToken != null && fcmToken.isNotEmpty) 'fcm_token': fcmToken,
       });
 

@@ -12,7 +12,6 @@ import '../../profile/models/profile_model.dart';
 import '../../profile/views/profile_screen.dart';
 import '../../wallet/views/wallet_screen.dart';
 import '../models/handled_call_model.dart';
-import '../models/home_state.dart';
 import '../viewmodels/home_viewmodel.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -1058,44 +1057,44 @@ class _AgentHomeView extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Row(
-          //   children: const [
-          //     Icon(Icons.task_alt_rounded, size: 18, color: Color(0xFF5B1FE2)),
-          //     SizedBox(width: 8),
-          //     Text(
-          //       'Tasks & Targets',
-          //       style: TextStyle(
-          //         fontSize: 15,
-          //         fontWeight: FontWeight.bold,
-          //         color: AppColors.textPrimary,
-          //       ),
-          //     ),
-          //   ],
-          // ),
-          // const SizedBox(height: 14),
-          // _buildTaskProgressItem(
-          //   label: 'Daily Target',
-          //   completed: tasks.daily.completed,
-          //   target: tasks.daily.target,
-          //   percentage: tasks.daily.progressPercentage,
-          //   color: const Color(0xFF5B1FE2),
-          // ),
-          // const SizedBox(height: 12),
-          // _buildTaskProgressItem(
-          //   label: 'Weekly Target',
-          //   completed: tasks.weekly.completed,
-          //   target: tasks.weekly.target,
-          //   percentage: tasks.weekly.progressPercentage,
-          //   color: const Color(0xFF06B6D4),
-          // ),
-          // const SizedBox(height: 12),
-          // _buildTaskProgressItem(
-          //   label: 'Monthly Target',
-          //   completed: tasks.monthly.completed,
-          //   target: tasks.monthly.target,
-          //   percentage: tasks.monthly.progressPercentage,
-          //   color: const Color(0xFF10B981),
-          // ),
+          Row(
+            children: const [
+              Icon(Icons.task_alt_rounded, size: 18, color: Color(0xFF5B1FE2)),
+              SizedBox(width: 8),
+              Text(
+                'Tasks & Targets',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          _buildTaskProgressItem(
+            label: 'Daily Target',
+            completed: tasks.daily.completed,
+            target: tasks.daily.target,
+            percentage: tasks.daily.progressPercentage,
+            color: const Color(0xFF5B1FE2),
+          ),
+          const SizedBox(height: 12),
+          _buildTaskProgressItem(
+            label: 'Weekly Target',
+            completed: tasks.weekly.completed,
+            target: tasks.weekly.target,
+            percentage: tasks.weekly.progressPercentage,
+            color: const Color(0xFF06B6D4),
+          ),
+          const SizedBox(height: 12),
+          _buildTaskProgressItem(
+            label: 'Monthly Target',
+            completed: tasks.monthly.completed,
+            target: tasks.monthly.target,
+            percentage: tasks.monthly.progressPercentage,
+            color: const Color(0xFF10B981),
+          ),
         ],
       ),
     );

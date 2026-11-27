@@ -7,8 +7,6 @@ import '../../../core/config/app_colors.dart';
 import '../../../core/routing/app_router.dart';
 import '../../../core/services/notification_service.dart';
 import '../models/auth_state.dart';
-import '../models/send_otp_response.dart';
-import '../models/verify_otp_response.dart';
 import '../viewmodels/auth_viewmodel.dart';
 
 class OtpVerificationScreen extends ConsumerStatefulWidget {

@@ -346,37 +346,37 @@ class ProfileScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.borderSubtle),
       ),
-      // child: Column(
-      //   crossAxisAlignment: CrossAxisAlignment.start,
-      //   children: [
-      //     const Text(
-      //       'Call Targets & Tasks',
-      //       style: TextStyle(
-      //         fontSize: 15,
-      //         fontWeight: FontWeight.bold,
-      //         color: AppColors.textPrimary,
-      //       ),
-      //     ),
-      //     const SizedBox(height: 14),
-      //     _buildTaskProgressRow(
-      //       label: 'Daily Target',
-      //       progress: tasks.daily,
-      //       color: const Color(0xFF6366F1),
-      //     ),
-      //     const SizedBox(height: 12),
-      //     _buildTaskProgressRow(
-      //       label: 'Weekly Target',
-      //       progress: tasks.weekly,
-      //       color: const Color(0xFF06B6D4),
-      //     ),
-      //     const SizedBox(height: 12),
-      //     _buildTaskProgressRow(
-      //       label: 'Monthly Target',
-      //       progress: tasks.monthly,
-      //       color: const Color(0xFF10B981),
-      //     ),
-      //   ],
-      // ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Call Targets & Tasks',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 14),
+          _buildTaskProgressRow(
+            label: 'Daily Target',
+            progress: tasks.daily,
+            color: const Color(0xFF6366F1),
+          ),
+          const SizedBox(height: 12),
+          _buildTaskProgressRow(
+            label: 'Weekly Target',
+            progress: tasks.weekly,
+            color: const Color(0xFF06B6D4),
+          ),
+          const SizedBox(height: 12),
+          _buildTaskProgressRow(
+            label: 'Monthly Target',
+            progress: tasks.monthly,
+            color: const Color(0xFF10B981),
+          ),
+        ],
+      ),
     );
   }
 

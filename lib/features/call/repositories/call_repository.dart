@@ -39,4 +39,8 @@ class CallRepository {
   Future<void> acceptCall(dynamic callId) async {
     await updateCallStatus(callId: callId, status: 'accepted');
   }
+
+  Future<void> endCall(dynamic callId) async {
+    await updateCallStatus(callId: callId, status: 'ended');
+  }
 }

@@ -10,6 +10,7 @@ import '../../features/profile/views/profile_screen.dart';
 import '../../features/profile/views/edit_profile_screen.dart';
 import '../../features/call/models/incoming_call_model.dart';
 import '../../features/call/views/incoming_call_screen.dart';
+import '../../features/call/views/active_call_screen.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -22,6 +23,7 @@ class AppRoutes {
   static const String profile = '/profile';
   static const String editProfile = '/edit-profile';
   static const String incomingCall = '/incoming-call';
+  static const String activeCall = '/active-call';
 }
 
 final GoRouter appRouter = GoRouter(
@@ -87,6 +89,20 @@ final GoRouter appRouter = GoRouter(
           callModel = IncomingCallModel.fromJson(extra);
         }
         return IncomingCallScreen(callModel: callModel);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.activeCall,
+      name: 'activeCall',
+      builder: (context, state) {
+        final extra = state.extra;
+        IncomingCallModel? callModel;
+        if (extra is IncomingCallModel) {
+          callModel = extra;
+        } else if (extra is Map<String, dynamic>) {
+          callModel = IncomingCallModel.fromJson(extra);
+        }
+        return ActiveCallScreen(callModel: callModel);
       },
     ),
   ],

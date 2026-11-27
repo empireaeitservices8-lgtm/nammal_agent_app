@@ -2,8 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/services/notification_service.dart';
 import '../models/auth_state.dart';
-import '../models/send_otp_response.dart';
-import '../models/verify_otp_response.dart';
 import '../repositories/auth_repository.dart';
 
 class AuthViewModel extends Notifier<AuthState> {
@@ -139,6 +137,10 @@ class AuthViewModel extends Notifier<AuthState> {
       idNumber: '',
       jurisdiction: '',
     );
+  }
+
+  void updateUser(UserModel user) {
+    state = state.copyWith(user: user);
   }
 
   Future<void> logout() async {

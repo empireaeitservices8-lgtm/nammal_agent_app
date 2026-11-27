@@ -164,7 +164,7 @@ class ProfileModel {
 
   // Convenience getters for backwards compatibility with UI
   String get id =>
-      (agent.id != null ? agent.id.toString() : null) ??
+      agent.id?.toString() ??
       rawJson['id']?.toString() ??
       rawJson['user_id']?.toString() ??
       agent.username;

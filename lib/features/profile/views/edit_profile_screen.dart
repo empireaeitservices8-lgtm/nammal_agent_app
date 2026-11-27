@@ -7,16 +7,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/config/app_colors.dart';
-import '../../../core/routing/app_router.dart';
 import '../../../core/services/storage_service.dart';
 import '../../auth/models/user_model.dart';
 import '../../auth/viewmodels/auth_viewmodel.dart';
 import '../../home/viewmodels/home_viewmodel.dart';
-import '../../home/views/home_screen.dart';
-import '../../wallet/views/wallet_screen.dart';
-import '../models/profile_model.dart';
 import '../viewmodels/profile_viewmodel.dart';
-import 'profile_screen.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -311,9 +306,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       );
 
       if (finalUser != null) {
-        ref.read(authViewModelProvider.notifier).state = ref
-            .read(authViewModelProvider)
-            .copyWith(user: finalUser);
+        ref.read(authViewModelProvider.notifier).updateUser(finalUser);
       }
 
       // Refresh Home dashboard state so home screen reflects updated profile immediately
@@ -323,7 +316,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (mounted) {
       setState(() => _isSaving = false);
       if (response != null) {
-        final serverMessage = response['message']?.toString() ??
+        final serverMessage =
+            response['message']?.toString() ??
             'Agent profile updated successfully';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

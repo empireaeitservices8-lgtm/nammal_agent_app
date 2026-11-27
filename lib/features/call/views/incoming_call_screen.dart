@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/app_colors.dart';
+import '../../../core/routing/app_router.dart';
 import '../models/incoming_call_model.dart';
 import '../repositories/call_repository.dart';
 
@@ -53,12 +54,14 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
     if (widget.callModel != null) {
       return widget.callModel!;
     }
-    final extra = GoRouterState.of(context).extra;
-    if (extra is IncomingCallModel) {
-      return extra;
-    } else if (extra is Map<String, dynamic>) {
-      return IncomingCallModel.fromJson(extra);
-    }
+    try {
+      final extra = GoRouterState.of(context).extra;
+      if (extra is IncomingCallModel) {
+        return extra;
+      } else if (extra is Map<String, dynamic>) {
+        return IncomingCallModel.fromJson(extra);
+      }
+    } catch (_) {}
     return const IncomingCallModel(
       callId: '0',
       callerName: 'Incoming Caller',
@@ -75,14 +78,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
     if (widget.onAccept != null) {
       widget.onAccept!();
     } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Connected to ${call.callerName}'),
-          backgroundColor: const Color(0xFF10B981),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-      context.pop(true);
+      context.pushReplacement(AppRoutes.activeCall, extra: call);
     }
   }
 
@@ -111,11 +107,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFAF8FE),
-              Color(0xFFF5F1FD),
-              Color(0xFFF9F7FE),
-            ],
+            colors: [Color(0xFFFAF8FE), Color(0xFFF5F1FD), Color(0xFFF9F7FE)],
           ),
         ),
         child: SafeArea(
@@ -190,9 +182,8 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
                             height: 270 * _pulseAnimation.value,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: const Color(0xFFEDE8FF).withValues(
-                                alpha: 0.35,
-                              ),
+                              color: const Color(0xFFEDE8FF)
+                                  .withValues(alpha: 0.35),
                             ),
                           );
                         },
@@ -207,9 +198,8 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
                             height: 215 * _pulseAnimation.value,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: const Color(0xFFEDE8FF).withValues(
-                                alpha: 0.65,
-                              ),
+                              color: const Color(0xFFEDE8FF)
+                                  .withValues(alpha: 0.65),
                             ),
                           );
                         },
@@ -572,11 +562,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
                 ],
               ),
               child: const Center(
-                child: Icon(
-                  Icons.call_rounded,
-                  size: 34,
-                  color: Colors.white,
-                ),
+                child: Icon(Icons.call_rounded, size: 34, color: Colors.white),
               ),
             ),
             const SizedBox(height: 8),

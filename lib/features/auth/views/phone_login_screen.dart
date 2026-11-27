@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/config/app_colors.dart';
 import '../../../core/routing/app_router.dart';
 import '../models/auth_state.dart';
-import '../models/send_otp_response.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../widgets/nammal_logo.dart';
 
